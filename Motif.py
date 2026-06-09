@@ -3,3 +3,5 @@ class Motif:
         self.motif_id = motif_id
         self.cases = cases
         self.taille = len(cases)
+
+        #ceci est un test !!
