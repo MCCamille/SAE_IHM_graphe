@@ -7,5 +7,3 @@ class Case:
         self.valeur = valeur
         self.fixe = fixe
         self.id_motif = None
-
-        case_depart = Case(0,3,4,True)
