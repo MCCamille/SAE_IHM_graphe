@@ -4,12 +4,24 @@ from Case import Case
 import random
 
 
-def prochaine_case_vide(grille):
+def prochaine_case_vide(grille) -> Case:
+    meilleure_case = None
+    meilleur_nb = None
+
     for l in range(grille.nb_lignes):
         for c in range(grille.nb_colonnes):
-            if grille.cases[l][c].est_vide():
-                return grille.cases[l][c]
-    return None
+            case = grille.cases[l][c]
+            if case.est_vide():
+                nb_possibles = len(valeurs_possibles(grille, case))
+
+                if nb_possibles == 0:
+                    return case
+
+                if meilleur_nb is None or nb_possibles < meilleur_nb:
+                    meilleure_case = case
+                    meilleur_nb = nb_possibles
+
+    return meilleure_case
 
 
 def valeurs_possibles(grille, case):
@@ -52,10 +64,12 @@ def resoudre(grille):
 # GÉNÉRATION DES MOTIFS ALÉATOIRES ADJACENTS
 # ============================================================
 
-def generer_motifs_aleatoires(grille, taille_min=2, taille_max=5):
+def generer_motifs_aleatoires(grille, taille_min=1, taille_max=5):
     """
-    Génère des motifs aléatoires avec cases adjacentes orthogonalement.
-    Toutes les cases appartiennent à un motif.
+    Génération semi-aléatoire plus stable :
+    - motifs adjacents orthogonalement
+    - tailles entre 1 et 5
+    - on évite de laisser trop de petites zones isolées
     """
 
     non_assignees = {
@@ -67,28 +81,38 @@ def generer_motifs_aleatoires(grille, taille_min=2, taille_max=5):
     motif_id = 0
 
     while non_assignees:
-        depart = random.choice(list(non_assignees))
+        # on prend toujours une case "ordonnée" pour éviter le chaos total
+        depart = min(non_assignees)
 
+        reste = len(non_assignees)
+
+        # on évite de demander un motif plus grand que ce qu'il reste
         taille_voulue = random.randint(taille_min, taille_max)
+        taille_voulue = min(taille_voulue, reste)
+
         courant = {depart}
-        frontiere = set(grille.obtenir_voisins_orthogonaux_coords(*depart)) & non_assignees
+        frontiere = set()
+
+        for voisin in grille.obtenir_voisins_orthogonaux_coords(*depart):
+            if voisin in non_assignees:
+                frontiere.add(voisin)
 
         while len(courant) < taille_voulue and frontiere:
+            # on prend un voisin au hasard parmi la frontière
             nouvelle = random.choice(list(frontiere))
-            courant.add(nouvelle)
-
-            # recalcul de la frontière
             frontiere.remove(nouvelle)
+
+            if nouvelle not in non_assignees or nouvelle in courant:
+                continue
+
+            courant.add(nouvelle)
 
             for voisin in grille.obtenir_voisins_orthogonaux_coords(*nouvelle):
                 if voisin in non_assignees and voisin not in courant:
                     frontiere.add(voisin)
 
-        # sécurité : si des cases restantes sont isolées, on accepte des petits motifs
-        cases_motif = []
-        for l, c in courant:
-            cases_motif.append(grille.get_case(l, c))
-
+        # création du motif
+        cases_motif = [grille.get_case(l, c) for (l, c) in courant]
         motif = Motif(motif_id, cases_motif)
         grille.ajouter_motif(motif)
 
@@ -96,7 +120,6 @@ def generer_motifs_aleatoires(grille, taille_min=2, taille_max=5):
             non_assignees.remove(coord)
 
         motif_id += 1
-
 
 # ============================================================
 # RETRAIT DE VALEURS POUR CRÉER LA GRILLE DE DÉPART
@@ -136,13 +159,17 @@ def retirer_valeurs(grille, nb_cases_depart):
 def creer_grille_jeu(nb_tentatives=100):
     taille = 8
     taille_min_motif = 1
-    taille_max_motif = 3
+    taille_max_motif = 5
     nb_cases_depart = 12
 
     for tentative in range(nb_tentatives):
         grille = Grille(taille, taille)
 
-        generer_motifs_aleatoires(grille, taille_min=taille_min_motif, taille_max=taille_max_motif)
+        generer_motifs_aleatoires(
+            grille,
+            taille_min=taille_min_motif,
+            taille_max=taille_max_motif
+        )
 
         if resoudre(grille):
             grille.solution = grille.copier_valeurs()
