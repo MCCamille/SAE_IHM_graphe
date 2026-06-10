@@ -35,3 +35,8 @@ class Grille:
         self.motifs = [
             Motif(sid, cases) for sid, cases in motifs_dict.items()
         ]
+
+    def placer_valeur_initiale(self, ligne: int, colonne: int, valeur: int):
+        case = self.get_case(ligne, colonne)
+        case.valeur = valeur
+        case.fixe = True  # case impossible à modifier pour le joueur
