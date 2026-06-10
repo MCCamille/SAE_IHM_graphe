@@ -3,24 +3,22 @@ from Case import Case
 from Motif import Motif
 
 class Grille:
-    def __init__(self, nb_lignes, nb_colonnes):
-        self.nb_lignes = nb_lignes 
-        self.nb_colonnes = nb_colonnes
-        self.cases = [[Case(l, c) for c in range(nb_colonnes)]for l in range(nb_lignes) ]# matrice de cases de la grille
+    def __init__(self, lignes, colonnes):
+        self.lignes = lignes 
+        self.colonnes = colonnes
+        self.cases = [[Case(l, c) for c in range(colonnes)] for l in range(lignes)]
         self.motifs = {}
 
-    # Renvoie la case à la position donnée
-    def get_case(self, ligne, colonne)->Case:
+    def get_case(self, ligne, colonne) -> Case:
         return self.cases[ligne][colonne]
     
     def copier_valeurs(self):
         return [
-            [self.cases[l][c].valeur for c in range(self.nb_colonnes)]
-            for l in range(self.nb_lignes)
+            [self.cases[l][c].valeur for c in range(self.colonnes)]
+            for l in range(self.lignes)
         ]
 
-    # Renvoie les cases voisines (8 directions) de la case donnée (ou None si hors limites)
-    def obtenir_voisins(self, case)->list:
+    def obtenir_voisins(self, case) -> list:
         voisins = []
         for dl in [-1, 0, 1]:
             for dc in [-1, 0, 1]:
@@ -28,34 +26,28 @@ class Grille:
                     continue
                 nl = case.ligne + dl
                 nc = case.colonne + dc
-                if 0 <= nl < self.nb_lignes and 0 <= nc < self.nb_colonnes:
+                if 0 <= nl < self.lignes and 0 <= nc < self.colonnes:
                     voisins.append(self.cases[nl][nc])
         return voisins
 
-    # Renvoie les coordonnées des cases voisines orthogonalement (4 directions) de la position donnée (pour la génération de motifs)
-    def obtenir_voisins_orthogonaux_coords(self, ligne, colonne)->list:
+    def obtenir_voisins_orthogonaux_coords(self, ligne, colonne) -> list:
         voisins = []
-        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-
-        for dl, dc in directions:
+        for dl, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
             nl = ligne + dl
             nc = colonne + dc
-            if 0 <= nl < self.nb_lignes and 0 <= nc < self.nb_colonnes:
+            if 0 <= nl < self.lignes and 0 <= nc < self.colonnes:
                 voisins.append((nl, nc))
         return voisins
 
-    #Ajoute un motif à la grille et met à jour les cases concernées
-    def ajouter_motif(self, motif)->None:
+    def ajouter_motif(self, motif) -> None:
         self.motifs[motif.motif_id] = motif
         for case in motif.cases:
             case.id_motif = motif.motif_id
 
-    # Modifie la valeur d'une case si elle n'est pas fixe et que la valeur est valide pour son motif
-    def modifier_case(self, ligne, colonne, valeur)->bool:
+    def modifier_case(self, ligne, colonne, valeur) -> bool:
         case = self.cases[ligne][colonne]
         if case.fixe:
             return False
-        
         if valeur is None:
             case.valeur = None
             return True
@@ -66,12 +58,10 @@ class Grille:
         return False
 
     def to_dict(self):
-        # Matrice des motif_id
         motif_map = [
             [self.cases[r][c].motif_id for c in range(self.colonnes)]
             for r in range(self.lignes)
         ]
-        
         valeurs_initiales = []
         for r in range(self.lignes):
             for c in range(self.colonnes):
@@ -82,7 +72,6 @@ class Grille:
                         "colonne": c,
                         "valeur": case.valeur
                     })
-        
         return {
             "lignes": self.lignes,
             "colonnes": self.colonnes,
@@ -90,20 +79,14 @@ class Grille:
             "valeurs_initiales": valeurs_initiales
         }
 
-    # Sauvegarde la grille au format JSON
     def sauvegarder_json(self, nom_fichier):
         with open(nom_fichier, "w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, ensure_ascii=False, separators=(",", ": "))
 
-    # Affiche les valeurs de la grille
     def afficher_valeurs(self):
         for ligne in self.cases:
             print(" ".join(str(case.valeur) if case.valeur is not None else "." for case in ligne))
 
-    # Affiche les ids des motifs de la grille
     def afficher_motifs(self):
-        for l in range(self.nb_lignes):
-            ligne = []
-            for c in range(self.nb_colonnes):
-                ligne.append(str(self.cases[l][c].id_motif))
-            print(" ".join(ligne))
+        for l in range(self.lignes):
+            print(" ".join(str(self.cases[l][c].id_motif) for c in range(self.colonnes)))
