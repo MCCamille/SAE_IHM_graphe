@@ -1,5 +1,5 @@
 class Case:
-
+    
     def __init__(self, ligne, colonne, valeur, fixe):
 
         self.ligne = ligne
