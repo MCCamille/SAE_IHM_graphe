@@ -51,7 +51,6 @@ def resoudre(grille):
         return True
     
     possibles = valeurs_possibles(grille, case)
-    print(f"  Case ({case.ligne},{case.colonne}) motif={case.id_motif} taille={grille.motifs[case.id_motif].taille} possibles={possibles}")
 
     for valeur in valeurs_possibles(grille, case):
         case.valeur = valeur

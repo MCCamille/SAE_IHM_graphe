@@ -58,8 +58,9 @@ class Grille:
         return False
 
     def to_dict(self):
+        # Remplacement de motif_id par id_motif ici :
         motif_map = [
-            [self.cases[r][c].motif_id for c in range(self.colonnes)]
+            [self.cases[r][c].id_motif for c in range(self.colonnes)]
             for r in range(self.lignes)
         ]
         valeurs_initiales = []
@@ -83,10 +84,13 @@ class Grille:
         with open(nom_fichier, "w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, ensure_ascii=False, separators=(",", ": "))
 
-    def afficher_valeurs(self):
-        for ligne in self.cases:
-            print(" ".join(str(case.valeur) if case.valeur is not None else "." for case in ligne))
-
     def afficher_motifs(self):
         for l in range(self.lignes):
-            print(" ".join(str(self.cases[l][c].id_motif) for c in range(self.colonnes)))
+            # Le :2 force le texte à prendre 2 caractères de large. 
+            # Si c'est un seul chiffre, Python ajoute un espace invisible avant.
+            print(" ".join(f"{self.cases[l][c].id_motif:2}" for c in range(self.colonnes)))
+
+    def afficher_valeurs(self):
+        for ligne in self.cases:
+            # On applique la même logique pour les valeurs pour que les deux grilles soient identiques visuellement
+            print(" ".join(f"{case.valeur:2}" if case.valeur is not None else " ." for case in ligne))
