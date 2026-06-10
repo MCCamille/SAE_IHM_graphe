@@ -6,5 +6,6 @@ class Case:
         self.fixe = False
         self.id_motif = None
 
+    #Renvoie si la case n'a pas de valeur
     def est_vide(self):
         return self.valeur is None
