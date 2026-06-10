@@ -66,15 +66,29 @@ class Grille:
         return False
 
     def to_dict(self):
-        data = {}
-        for i, motif in enumerate(self.motifs.values(), start=1):
-            nom_motif = f"motif{i}"
-            data[nom_motif] = []
-            for case in motif.cases:
-                valeur = case.valeur if case.valeur is not None else 0
-                data[nom_motif].append([case.colonne, case.ligne, valeur])
-        return data
-
+        # Matrice des motif_id
+        motif_map = [
+            [self.cases[r][c].motif_id for c in range(self.colonnes)]
+            for r in range(self.lignes)
+        ]
+        
+        valeurs_initiales = []
+        for r in range(self.lignes):
+            for c in range(self.colonnes):
+                case = self.cases[r][c]
+                if case.fixe and case.valeur is not None:
+                    valeurs_initiales.append({
+                        "ligne": r,
+                        "colonne": c,
+                        "valeur": case.valeur
+                    })
+        
+        return {
+            "lignes": self.lignes,
+            "colonnes": self.colonnes,
+            "motifs": motif_map,
+            "valeurs_initiales": valeurs_initiales
+        }
 
     # Sauvegarde la grille au format JSON
     def sauvegarder_json(self, nom_fichier):
