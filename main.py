@@ -1,23 +1,20 @@
 from generation import Grille,creer_grille_jeu
 
 def main():
-    # 1. Initialisation
     grille = Grille(8, 8)
 
-    # 2. Génération de la solution secrète
-    grille.remplir_chiffres_seuls()
-    grille.generer_motifs_depuis_chiffres()
+    # Cette unique fonction s'occupe de TOUT créer sans aucune erreur possible
+    grille.generer_jeu_parfait()
 
-    # 3. Sauvegarde de la solution pour pouvoir la vérifier plus tard
-    solution_complete = grille.copier_valeurs()
+    print("--- VERIFICATION DE LA SOLUTION COMPLETE ---")
+    grille.afficher_valeurs()
+    print("--------------------------------------------")
 
-    # 4. Création du puzzle pour le joueur (on creuse la grille)
+    # On creuse la grille pour le joueur
     creer_grille_jeu(grille)
 
-    # 5. C'est prêt !
-    print("--- GRILLE DE DÉPART DU JOUEUR ---")
-    grille.afficher_valeurs() 
-    # Les chiffres affichés sont ceux qui ont 'fixe = True'. Les '.' sont à remplir par le joueur.
+    print("\n--- GRILLE FINALE DU JOUEUR ---")
+    grille.afficher_valeurs()
 
     print("\n--- CONFIGURATION DES MOTIFS ---")
     grille.afficher_motifs()
