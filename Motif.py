@@ -3,7 +3,6 @@ class Motif:
         self.motif_id = motif_id
         self.cases = cases
 
-    @property
     def taille(self):
         return len(self.cases)
 

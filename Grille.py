@@ -9,17 +9,25 @@ class Grille:
         self.colonnes = colonnes
         self.cases = [[Case(l, c) for c in range(colonnes)] for l in range(lignes)]
         self.motifs = {}
-
+        
+        
+    # Permet d'obtenir une case de la grille à partir de ses coordonnées (ligne, colonne)
     def get_case(self, ligne, colonne) -> Case:
         return self.cases[ligne][colonne]
     
+    
+    # Permet de copier les valeurs actuelles de la grille dans une matrice
     def copier_valeurs(self):
+        """Renvoie une matrice des valeurs actuelles de la grille, avec None pour les cases vides."""
+        
         return [
             [self.cases[l][c].valeur for c in range(self.colonnes)]
             for l in range(self.lignes)
         ]
 
+    # Permet d'obtenir les cases voisines (y compris diagonales) d'une case donnée
     def obtenir_voisins(self, case) -> list:
+        """Renvoie les cases voisines (y compris diagonales) d'une case donnée."""
         voisins = []
         for dl in [-1, 0, 1]:
             for dc in [-1, 0, 1]:
@@ -31,7 +39,9 @@ class Grille:
                     voisins.append(self.cases[nl][nc])
         return voisins
 
+    # Permet d'obtenir les coordonnées des cases voisines orthogonales d'une case donnée
     def obtenir_voisins_orthogonaux_coords(self, ligne, colonne) -> list:
+        """Renvoie les coordonnées (ligne, colonne) des cases orthogonales voisines (haut, bas, gauche, droite)."""
         voisins = []
         for dl, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
             nl = ligne + dl
@@ -40,12 +50,17 @@ class Grille:
                 voisins.append((nl, nc))
         return voisins
 
+    # Permet d'ajouter un motif à la grille
     def ajouter_motif(self, motif) -> None:
+        """Enregistre un motif dans la grille et met à jour les cases concernées."""
         self.motifs[motif.motif_id] = motif
         for case in motif.cases:
             case.id_motif = motif.motif_id
 
+    # Permet de modifier la valeur d'une case si elle n'est pas fixe et que la valeur est valide pour son motif
     def modifier_case(self, ligne, colonne, valeur) -> bool:
+        """Modifie la valeur d'une case si elle n'est pas fixe et que la valeur est valide pour son motif.
+        Renvoie True si la modification a été effectuée, False sinon."""
         case = self.cases[ligne][colonne]
         if case.fixe:
             return False
@@ -58,8 +73,9 @@ class Grille:
             return True
         return False
 
+    # Permet de convertir la grille en un dictionnaire pour la sauvegarde JSON
     def to_dict(self):
-        # Remplacement de motif_id par id_motif ici :
+        """Convertit la grille en un dictionnaire pour la sauvegarde JSON."""
         motif_map = [
             [self.cases[r][c].id_motif for c in range(self.colonnes)]
             for r in range(self.lignes)
@@ -81,28 +97,35 @@ class Grille:
             "valeurs_initiales": valeurs_initiales
         }
 
+    # Permet de sauvegarder la grille au format JSON
     def sauvegarder_json(self, nom_fichier):
+        """Sauvegarde la grille au format JSON."""
         with open(nom_fichier, "w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, ensure_ascii=False, separators=(",", ": "))
 
+    # Permet d'afficher les motifs de la grille
     def afficher_motifs(self):
+        """Affiche les motifs de la grille en utilisant les id_motif de chaque case."""
         for l in range(self.lignes):
             # Le :2 force le texte à prendre 2 caractères de large. 
             # Si c'est un seul chiffre, Python ajoute un espace invisible avant.
             print(" ".join(f"{self.cases[l][c].id_motif:2}" for c in range(self.colonnes)))
 
+    # Permet d'afficher les valeurs de la grille
     def afficher_valeurs(self):
+        """Affiche les valeurs de la grille, en affichant " ." pour les cases vides pour garder l'alignement."""
         for ligne in self.cases:
             # On vérifie si c.valeur existe. Si oui, on l'affiche sur 2 caractères.
             # Si c'est None, on affiche " ." pour garder le même alignement.
             print(" ".join(f"{c.valeur:2}" if c.valeur is not None else " ." for c in ligne))
     
+    #Permet de vérifier si le chiffre peut etre placé dans la grille
     def est_chiffre_valide(self, case, chiffre):
-        """Vérifie STRICTEMENT les 8 voisins (Règle du Roi)."""
+        """Vérifie les 8 voisin pour placer un chiffres dans la grille."""
         ligne_c = case.ligne
         colonne_c = case.colonne
 
-        # On boucle manuellement sur les 8 cases autour (y compris diagonales)
+        # On boucle sur les 8 cases autour (y compris diagonales)
         for dl in [-1, 0, 1]:
             for dc in [-1, 0, 1]:
                 if dl == 0 and dc == 0:
@@ -114,91 +137,11 @@ class Grille:
                 # Si le voisin est bien dans la grille
                 if 0 <= nl < self.lignes and 0 <= nc < self.colonnes:
                     if self.cases[nl][nc].valeur == chiffre:
-                        return False # Doublon trouvé dans les 8 voisins !
+                        return False # si le meme chiffre est trouvé dans les voisin 
                         
         return True
-
-    def remplir_chiffres_seuls(self):
-        """Remplit la grille en respectant uniquement la contrainte du Roi."""
-        # 1. Trouver la PREMIÈRE case vide
-        case_vide = None
-        for l in range(self.lignes):
-            for c in range(self.colonnes):
-                if self.cases[l][c].valeur is None: # Vérification directe
-                    case_vide = self.cases[l][c]
-                    break
-            if case_vide: break
-
-        # Si plus de case vide, la solution est trouvée !
-        if not case_vide:
-            return True 
-
-        # 2. On teste des chiffres de 1 à 5 mélangés
-        chiffres = [1, 2, 3, 4, 5]
-        random.shuffle(chiffres)
-
-        for ch in chiffres:
-            if self.est_chiffre_valide(case_vide, ch):
-                case_vide.valeur = ch # Écriture directe forcée
-                
-                if self.remplir_chiffres_seuls():
-                    return True
-                    
-                case_vide.valeur = None # Backtrack propre
-
-        return False
-
-    def generer_motifs_depuis_chiffres(self):
-        """
-        Crée des dominos (motifs de taille 2) en associant une case impaire 
-        avec une case paire voisine. Simple, rapide et sans aucun doublon possible.
-        """
-        self.motifs = {}
-        for ligne in self.cases:
-            for case in ligne:
-                case.id_motif = None
-
-        cases_sans_motif = [c for ligne in self.cases for c in ligne]
-        random.shuffle(cases_sans_motif)
-        
-        id_actuel = 1
-
-        while cases_sans_motif:
-            case_depart = cases_sans_motif.pop(0)
-            
-            # On va chercher un voisin orthogonal libre pour faire un motif de taille 2
-            extensions_possibles = []
-            for nl, nc in self.obtenir_voisins_orthogonaux_coords(case_depart.ligne, case_depart.colonne):
-                voisin = self.cases[nl][nc]
-                
-                # Pour que le motif de taille 2 soit valide, il faut :
-                # 1. Que le voisin n'ait pas de motif
-                # 2. Que son chiffre soit différent de notre case de départ
-                if voisin.id_motif is None and voisin.valeur != case_depart.valeur:
-                    extensions_possibles.append(voisin)
-            
-            if extensions_possibles:
-                # On a trouvé un voisin valide -> Motif de taille 2 !
-                choix = random.choice(extensions_possibles)
-                cases_motif = [case_depart, choix]
-                choix.id_motif = id_actuel
-                case_depart.id_motif = id_actuel
-                if choix in cases_sans_motif:
-                    cases_sans_motif.remove(choix)
-            else:
-                # Si la case est totalement isolée par d'autres motifs, 
-                # on en fait un motif de taille 1 (il ne contient que son propre chiffre).
-                # Règle de cohérence : un motif de taille 1 ne peut contenir que le chiffre 1.
-                # Donc on force sa valeur à 1 pour que la grille reste résolvable.
-                cases_motif = [case_depart]
-                case_depart.valeur = 1
-                case_depart.id_motif = id_actuel
-
-            # Enregistrement du motif
-            nouveau_motif = Motif(id_actuel, cases_motif)
-            self.ajouter_motif(nouveau_motif)
-            id_actuel += 1
-                
+       
+    # Permet de résoudre la grille en comptant le nombre de solutions possibles        
     def resoudre_complet(self, solutions_trouvees=0):
         if solutions_trouvees >= 2:
             return solutions_trouvees
@@ -214,38 +157,34 @@ class Grille:
         if not case_vide:
             return solutions_trouvees + 1
 
-        # C'EST ICI QUE ÇA CHANGE :
         motif = self.motifs[case_vide.id_motif]
         
-        # On ne teste QUE les chiffres valides pour la taille de CE motif (ex: de 1 à 2)
+        # On ne teste que les chiffres valides pour la taille motif (ex: de 1 à 2)
         for ch in range(1, motif.taille + 1):
             
-            # Règle 1 : Pas de doublon dans le motif
+            # pas de doublon dans le motif
             if ch in motif.valeurs_presentes():
                 continue
             
-            # Règle 2 : Règle du Roi (les 8 voisins)
+            # pas de doublon dans les cases adjacentes
             if not self.est_chiffre_valide(case_vide, ch):
                 continue
 
-            # Le chiffre est valide, on tente le coup
             case_vide.valeur = ch
             solutions_trouvees = self.resoudre_complet(solutions_trouvees)
-            case_vide.valeur = None # Backtrack
+            case_vide.valeur = None 
 
             if solutions_trouvees >= 2:
                 break
 
         return solutions_trouvees
     
-    import random
-
     def generer_jeu_parfait(self):
         """
         Génère simultanément les motifs et les chiffres pour garantir 
-        une grille 100% valide du premier coup.
+        une grille valide du premier coup.
         """
-        # Réinitialisation propre
+        # Réinitialisation de la grille et des motifs
         self.motifs = {}
         for ligne in self.cases:
             for case in ligne:
@@ -262,7 +201,7 @@ class Grille:
                         break
                 if case_libre: break
 
-            # Si toutes les cases ont un motif, la grille est finie et parfaite !
+            # Si toutes les cases ont un motif, la grille est complète
             if not case_libre:
                 return True
 
@@ -288,7 +227,7 @@ class Grille:
                 trouver_formes([case_libre], taille)
                 
                 if not formes_possibles:
-                    continue # Impossible de faire un motif de cette taille ici
+                    continue # Impossible de faire un motif de cette taille
                 
                 random.shuffle(formes_possibles)
 
@@ -297,10 +236,10 @@ class Grille:
                     # Générer toutes les permutations de chiffres de 1 à taille (ex: [1, 3, 2])
                     chiffres_possibles = list(range(1, taille + 1))
                     # On teste quelques permutations aléatoires de chiffres pour cette forme
-                    for _ in range(5): # 5 essais de chiffres par forme pour aller vite
+                    for _ in range(5): # 5 essais de chiffres par forme
                         random.shuffle(chiffres_possibles)
                         
-                        # On teste si cette combinaison de chiffres respecte la règle du Roi
+                        # On teste si cette combinaison de chiffres respecte la validité locale (pas de doublons dans les cases adjacentes)
                         valide = True
                         for i, case_forme in enumerate(forme):
                             if not self.est_chiffre_valide(case_forme, chiffres_possibles[i]):
@@ -322,7 +261,7 @@ class Grille:
                             if backtrack(id_motif_actuel + 1):
                                 return True
                             
-                            # Backtrack : On nettoie tout si ça a échoué plus loin
+                            #On nettoie tout si ça a échoué plus loin
                             del self.motifs[id_motif_actuel]
                             for case_forme in forme:
                                 case_forme.id_motif = None

@@ -24,7 +24,7 @@ def creer_grille_jeu(grille, difficulte="moyen"):
 
     for case in cases:
         if cases_videes >= max_cases_a_vider:
-            # On a assez creusé, on verrouille le reste des chiffres pour le joueur
+            # On a assez enlevé de chiffres, on verrouille le reste des chiffres pour le joueur
             if case.valeur is not None:
                 case.fixe = True
             continue

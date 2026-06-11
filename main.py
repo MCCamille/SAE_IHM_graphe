@@ -3,7 +3,6 @@ from generation import Grille,creer_grille_jeu
 def main():
     grille = Grille(8, 8)
 
-    # Cette unique fonction s'occupe de TOUT créer sans aucune erreur possible
     grille.generer_jeu_parfait()
 
     print("--- VERIFICATION DE LA SOLUTION COMPLETE ---")
