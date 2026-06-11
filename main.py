@@ -1,27 +1,26 @@
-from generation import creer_grille_jeu, generer_motifs_aleatoires
-from Grille import Grille
-
-from generation import creer_grille_jeu
+from generation import Grille,creer_grille_jeu
 
 def main():
-    print("Générateur de Néonaure")
+    # 1. Initialisation
+    grille = Grille(8, 8)
 
-    grille = creer_grille_jeu()
+    # 2. Génération de la solution secrète
+    grille.remplir_chiffres_seuls()
+    grille.generer_motifs_depuis_chiffres()
 
-    if grille is None:
-        print("Impossible de générer une grille valide.")
-        return
+    # 3. Sauvegarde de la solution pour pouvoir la vérifier plus tard
+    solution_complete = grille.copier_valeurs()
 
-    print("\n--- Motifs (ids) ---")
+    # 4. Création du puzzle pour le joueur (on creuse la grille)
+    creer_grille_jeu(grille)
+
+    # 5. C'est prêt !
+    print("--- GRILLE DE DÉPART DU JOUEUR ---")
+    grille.afficher_valeurs() 
+    # Les chiffres affichés sont ceux qui ont 'fixe = True'. Les '.' sont à remplir par le joueur.
+
+    print("\n--- CONFIGURATION DES MOTIFS ---")
     grille.afficher_motifs()
-
-    print("\n--- Grille de départ ---")
-    grille.afficher_valeurs()
-
-    nom_fichier = "grille_sudoku.json"
-    grille.sauvegarder_json(nom_fichier)
-    print(f"\nGrille sauvegardée dans : {nom_fichier}")
-
 
 if __name__ == "__main__":
     main()
