@@ -48,11 +48,13 @@ def valeurs_possibles(grille, case):
 def resoudre(grille):
     case = prochaine_case_vide(grille)
     if case is None:
-        return True
-    
-    possibles = valeurs_possibles(grille, case)
+        return True  # ← aucune case vide = grille complète
 
-    for valeur in valeurs_possibles(grille, case):
+    possibles = valeurs_possibles(grille, case)
+    if len(possibles) == 0:
+        return False  # ← case bloquée = échec, on backtrack
+
+    for valeur in possibles:
         case.valeur = valeur
         if resoudre(grille):
             return True
@@ -106,40 +108,41 @@ def generer_motifs_aleatoires(grille, taille_min=1, taille_max=5):
         motif_id += 1
 
 def retirer_valeurs(grille, nb_cases_depart):
-    # Étape 1 : tout effacer
-    for l in range(grille.lignes):
-        for c in range(grille.colonnes):
-            grille.cases[l][c].fixe = False
-            grille.cases[l][c].valeur = None
-
-    # Étape 2 : repartir de la solution
+    # Étape 1 : remettre toutes les valeurs depuis la solution
     for l in range(grille.lignes):
         for c in range(grille.colonnes):
             grille.cases[l][c].valeur = grille.solution[l][c]
-            print(f"Case ({l},{c}) = {grille.solution[l][c]}")
+            grille.cases[l][c].fixe = False
 
-    # Étape 3 : pour chaque motif garantir 1 ou 2 cases visibles
-    cases_a_garder = []
+    # Étape 2 : garantir 1 case visible par motif via coordonnées
+    ids_gardes = set()
     for motif in grille.motifs.values():
-        cases_motif = list(motif.cases)
-        random.shuffle(cases_motif)
-        nb_a_garder = random.randint(1, min(2, len(cases_motif)))
-        print(f"Motif {motif.motif_id} : {len(cases_motif)} cases, on garde {nb_a_garder}")  # ← ajoute ça
-        cases_a_garder.extend(cases_motif[:nb_a_garder])
+        # Récupérer les coordonnées des cases du motif
+        coords = [(case.ligne, case.colonne) for case in motif.cases]
+        l, c = random.choice(coords)
+        ids_gardes.add((l, c))
 
-    print(f"Total cases gardées : {len(cases_a_garder)}")  # ← et ça
+    # Étape 3 : compléter jusqu'à nb_cases_depart
+    toutes_coords = [
+        (l, c)
+        for l in range(grille.lignes)
+        for c in range(grille.colonnes)
+        if (l, c) not in ids_gardes
+    ]
+    random.shuffle(toutes_coords)
+    nb_manquantes = nb_cases_depart - len(ids_gardes)
+    for coord in toutes_coords[:max(0, nb_manquantes)]:
+        ids_gardes.add(coord)
 
-    # Étape 4 : fixer les cases gardées et effacer les autres
-    ids_gardes = {id(c) for c in cases_a_garder}
+    # Étape 4 : fixer ou effacer
     for l in range(grille.lignes):
         for c in range(grille.colonnes):
             case = grille.cases[l][c]
-            if id(case) in ids_gardes:
+            if (l, c) in ids_gardes:
                 case.fixe = True
             else:
                 case.valeur = None
                 case.fixe = False
-
 
 def creer_grille_jeu(taille=8, nb_cases_depart=12, taille_min_motif=2, taille_max_motif=5, nb_tentatives=100):
     for tentative in range(nb_tentatives):
@@ -149,7 +152,13 @@ def creer_grille_jeu(taille=8, nb_cases_depart=12, taille_min_motif=2, taille_ma
         if resoudre(grille):
             print("Grille résolue !")
             grille.solution = grille.copier_valeurs()
+            print("Solution :")
+            for ligne in grille.solution:
+                print(ligne)
             retirer_valeurs(grille, nb_cases_depart)
+            print("Après retirer_valeurs :")
+            for l in range(grille.lignes):
+                print([grille.cases[l][c].valeur for c in range(grille.colonnes)])
             return grille
         else:
             print("Échec de résolution")
