@@ -1,10 +1,87 @@
 import sys
+import json
+import os
 from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton,
                               QLineEdit, QFrame, QHBoxLayout, QVBoxLayout)
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
+from PyQt6.QtCore import Qt, QRect
+from PyQt6.QtGui import QFont, QPainter, QColor, QPen
 
 from Controleur import Controleur
+
+
+# Couleur de fond pour les cases sans motif
+COULEUR_NEUTRE = QColor("#e8f0f5")
+
+# Couleurs pastels par motif (background des cases)
+COULEURS_MOTIF = [
+    QColor("#aed6f1"), QColor("#f1948a"), QColor("#f9c784"),
+    QColor("#a9dfbf"), QColor("#d2b4de"), QColor("#a2d9ce"),
+    QColor("#f9e4b7"), QColor("#b2bec3"), QColor("#d5b8a8"),
+    QColor("#f5b7b1"), QColor("#aab7d4"), QColor("#a8d5cc"),
+    QColor("#e4f2a1"), QColor("#fce5a3"), QColor("#c5e1a5"),
+]
+
+
+class GrilleWidget(QWidget):
+    """Affiche une grille 8×8 lue depuis un fichier JSON."""
+
+    TAILLE_GRILLE = 8
+
+    def __init__(self, chemin_json: str, parent=None):
+        super().__init__(parent)
+        self.motifs: dict = {}
+        self.case_motif: dict = {}
+        self.case_valeur: dict = {}
+        self._charger(chemin_json)
+
+    def _charger(self, chemin: str):
+        with open(chemin, encoding="utf-8") as f:
+            data = json.load(f)
+        for idx, (nom, cases) in enumerate(data.items()):
+            self.motifs[nom] = cases
+            for triplet in cases:
+                x, y, val = triplet
+                self.case_motif[(x, y)] = idx
+                self.case_valeur[(x, y)] = val
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        w, h = self.width(), self.height()
+        n = self.TAILLE_GRILLE
+        marge = 20
+        taille_case = min((w - 2 * marge) // n, (h - 2 * marge) // n)
+        grille_px = taille_case * n
+        ox = (w - grille_px) // 2
+        oy = (h - grille_px) // 2
+
+        # Fond des cases coloré par motif (pastel)
+        for y in range(n):
+            for x in range(n):
+                idx = self.case_motif.get((x, y), -1)
+                couleur = COULEURS_MOTIF[idx % len(COULEURS_MOTIF)] if idx >= 0 else COULEUR_NEUTRE
+                rect = QRect(ox + x * taille_case, oy + y * taille_case,
+                             taille_case, taille_case)
+                painter.fillRect(rect, couleur)
+
+        # Grille fine
+        painter.setPen(QPen(QColor("#000000"), 1))
+        for i in range(n + 1):
+            painter.drawLine(ox + i * taille_case, oy, ox + i * taille_case, oy + grille_px)
+            painter.drawLine(ox, oy + i * taille_case, ox + grille_px, oy + i * taille_case)
+
+        # Valeurs spéciales
+        font = QFont("Arial", max(8, taille_case // 4), QFont.Weight.Bold)
+        painter.setFont(font)
+        for (x, y), val in self.case_valeur.items():
+            if val != 0:
+                rect = QRect(ox + x * taille_case, oy + y * taille_case,
+                             taille_case, taille_case)
+                painter.setPen(QColor("#222222"))
+                painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, str(val))
+
+        painter.end()
 
 
 class widget(QWidget):
@@ -20,7 +97,8 @@ class widget(QWidget):
         titre.setFont(QFont("Arial", 24, QFont.Weight.Bold))
 
         # --- Zone de jeu ---
-        self.zone_jeu = QWidget()
+        chemin_json = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Exemples de grille", "grille1.json")
+        self.zone_jeu = GrilleWidget(chemin_json)
         self.zone_jeu.setStyleSheet("background-color: lightblue;")
         self.zone_jeu.setFixedSize(750, 700)
 
@@ -137,25 +215,26 @@ class widget(QWidget):
         self.showMaximized()
 
     # --- Méthodes appelées par le Contrôleur ---
-    def maj_nom(self, nom):      
-        self.nom_valeur.setText(nom);   
+    def maj_nom(self, nom):
+        self.nom_valeur.setText(nom)
         self.champ_nom.setText(nom)
-    
-    def maj_score(self, score):  
+
+    def maj_score(self, score):
         self.score_valeur.setText(str(score))
-    
-    def maj_timer(self, texte):  
+
+    def maj_timer(self, texte):
         self.timer_valeur.setText(texte)
-    
-    def maj_pause(self, pause):  
+
+    def maj_pause(self, pause):
         self.pause_btn.setText("Reprendre  ▶" if pause else "Pause  ⏸")
 
     # --- Slots UI ---
-    def _on_appliquer(self):   
+    def _on_appliquer(self):
         self.ctrl.appliquer_nom(self.champ_nom.text())
-    
-    def _on_reset(self):       
-        self.ctrl.reset(self.champ_nom.text()); self._fermer_menu()
+
+    def _on_reset(self):
+        self.ctrl.reset(self.champ_nom.text())
+        self._fermer_menu()
 
     def _toggle_menu(self, checked):
         self.menu_panel.setVisible(checked)
@@ -167,8 +246,10 @@ class widget(QWidget):
         self.menu_btn.setText("Menu  ☰")
 
     def _sep(self):
-        f = QFrame(); f.setFrameShape(QFrame.Shape.HLine)
-        f.setStyleSheet("color: #444;"); return f
+        f = QFrame()
+        f.setFrameShape(QFrame.Shape.HLine)
+        f.setStyleSheet("color: #444;")
+        return f
 
 
 if __name__ == "__main__":
