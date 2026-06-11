@@ -106,33 +106,39 @@ def generer_motifs_aleatoires(grille, taille_min=1, taille_max=5):
         motif_id += 1
 
 def retirer_valeurs(grille, nb_cases_depart):
-    toutes_cases = [
-        grille.cases[l][c]
-        for l in range(grille.lignes)
-        for c in range(grille.colonnes)
-    ]
+    # Étape 1 : tout effacer
+    for l in range(grille.lignes):
+        for c in range(grille.colonnes):
+            grille.cases[l][c].fixe = False
+            grille.cases[l][c].valeur = None
 
-    # tout mettre en fixe
-    for case in toutes_cases:
-        case.fixe = True
+    # Étape 2 : repartir de la solution
+    for l in range(grille.lignes):
+        for c in range(grille.colonnes):
+            grille.cases[l][c].valeur = grille.solution[l][c]
+            print(f"Case ({l},{c}) = {grille.solution[l][c]}")
 
-    cases_retirables = []
+    # Étape 3 : pour chaque motif garantir 1 ou 2 cases visibles
+    cases_a_garder = []
     for motif in grille.motifs.values():
         cases_motif = list(motif.cases)
         random.shuffle(cases_motif)
-        
-        # garder entre 1 et 2 cases par motif (aléatoirement)
         nb_a_garder = random.randint(1, min(2, len(cases_motif)))
-        cases_retirables.extend(cases_motif[nb_a_garder:])
+        print(f"Motif {motif.motif_id} : {len(cases_motif)} cases, on garde {nb_a_garder}")  # ← ajoute ça
+        cases_a_garder.extend(cases_motif[:nb_a_garder])
 
-    # mélanger retirer jusqu'à atteindre nb_cases_depart
-    random.shuffle(cases_retirables)
-    nb_total = len(toutes_cases)
-    nb_a_retirer = nb_total - nb_cases_depart
+    print(f"Total cases gardées : {len(cases_a_garder)}")  # ← et ça
 
-    for case in cases_retirables[:nb_a_retirer]:
-        case.valeur = None
-        case.fixe = False
+    # Étape 4 : fixer les cases gardées et effacer les autres
+    ids_gardes = {id(c) for c in cases_a_garder}
+    for l in range(grille.lignes):
+        for c in range(grille.colonnes):
+            case = grille.cases[l][c]
+            if id(case) in ids_gardes:
+                case.fixe = True
+            else:
+                case.valeur = None
+                case.fixe = False
 
 
 def creer_grille_jeu(taille=8, nb_cases_depart=12, taille_min_motif=2, taille_max_motif=5, nb_tentatives=100):
