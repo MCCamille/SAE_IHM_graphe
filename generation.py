@@ -8,7 +8,6 @@ def creer_grille_jeu(grille):
     # On liste toutes les cases de la grille et on les mélange
     cases = [grille.cases[l][c] for l in range(grille.lignes) for c in range(grille.colonnes)]
     random.shuffle(cases)
-
     for case in cases:
         # On sauvegarde la valeur d'origine au cas où
         valeur_origine = case.valeur
