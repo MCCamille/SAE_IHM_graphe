@@ -1,78 +1,177 @@
 import sys
-from PyQt6.QtWidgets import (QApplication, QHBoxLayout, QWidget, 
-                              QVBoxLayout, QPushButton, QLabel)
+from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton,
+                              QLineEdit, QFrame, QHBoxLayout, QVBoxLayout)
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
+from Controleur import Controleur
+
+
 class widget(QWidget):
-    
+
     def __init__(self):
         super().__init__()
-
-        # configuration de la fenêtre
         self.setWindowTitle('SAE Graphes')
+        self.ctrl = Controleur()
 
-        # --- Widgets ---
-        self.titre = QLabel("Nom du jeu")
-        self.titre.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.titre.setFont(QFont("Arial", 24, QFont.Weight.Bold))
+        # --- Titre ---
+        titre = QLabel("Nom du jeu")
+        titre.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        titre.setFont(QFont("Arial", 24, QFont.Weight.Bold))
 
-        self.stats = QLabel("Stats ?")
-        self.stats.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        # Zone de jeu (espace réservé)
+        # --- Zone de jeu ---
         self.zone_jeu = QWidget()
         self.zone_jeu.setStyleSheet("background-color: lightblue;")
-        self.zone_jeu.setFixedSize(750, 700)  
+        self.zone_jeu.setFixedSize(750, 700)
 
-        # Boutons droite
-        self.menu = QPushButton("Menu  ☰")
+        # --- Stats ---
+        self.nom_valeur   = QLabel("Player 1")
+        self.score_valeur = QLabel("0")
+        self.timer_valeur = QLabel("00:00")
+
+        self.nom_valeur.setStyleSheet("color: white; font-size: 14px; font-weight: bold;")
+        self.score_valeur.setStyleSheet("color: #f0c040; font-size: 14px; font-weight: bold;")
+        self.timer_valeur.setStyleSheet("color: #40c0f0; font-size: 14px; font-weight: bold;")
+
+        stats_frame = QFrame()
+        stats_frame.setFixedWidth(220)
+        stats_frame.setStyleSheet("QFrame { border: 2px solid #555; border-radius: 8px; background-color: #1e1e1e; }")
+
+        sl = QVBoxLayout(stats_frame)
+        sl.setContentsMargins(10, 10, 10, 10)
+        sl.setSpacing(6)
+        for label_txt, valeur in [("Joueur", self.nom_valeur),
+                                   ("Score",  self.score_valeur),
+                                   ("Temps",  self.timer_valeur)]:
+            lbl = QLabel(label_txt)
+            lbl.setStyleSheet("color: #aaaaaa; font-size: 11px;")
+            sl.addWidget(lbl)
+            sl.addWidget(valeur)
+            sl.addWidget(self._sep())
+
+        # --- Boutons droite ---
+        btn_style = """QPushButton { color: white; background: #2a2a2a; border: 1px solid #555;
+                        border-radius: 4px; padding: 6px 8px; }
+                       QPushButton:hover { background: #3a3a3a; }"""
+
+        self.menu_btn  = QPushButton("Menu  ☰")
         self.pause_btn = QPushButton("Pause  ⏸")
-        self.quitter_top = QPushButton("Quitter  ✕")
+        quitter_btn    = QPushButton("Quitter  ✕")
 
-        # --- Layouts ---
-        self.vlayout_main = QVBoxLayout()
-        self.hlayout_centre = QHBoxLayout()
-        self.vlayout_gauche = QVBoxLayout()
-        self.vlayout_droite = QVBoxLayout()
-        self.vlayout_jeu = QVBoxLayout()  
+        for b in (self.menu_btn, self.pause_btn, quitter_btn):
+            b.setStyleSheet(btn_style)
 
-        self.setLayout(self.vlayout_main)
+        self.menu_btn.setCheckable(True)
+        self.menu_btn.clicked.connect(self._toggle_menu)
+        self.pause_btn.clicked.connect(self.ctrl.toggle_pause)
+        quitter_btn.clicked.connect(self.close)
 
-        # --- Colonne gauche ---
-        self.vlayout_gauche.addWidget(self.titre)
-        self.vlayout_gauche.addWidget(self.stats)
-        self.vlayout_gauche.addStretch()
+        # --- Panneau menu ---
+        self.menu_panel = QFrame()
+        self.menu_panel.setFixedWidth(220)
+        self.menu_panel.setVisible(False)
+        self.menu_panel.setStyleSheet("QFrame { border: 1px solid #555; border-radius: 6px; background: #1a1a1a; }")
 
-        # --- Zone de jeu centrée verticalement ---
-        self.vlayout_jeu.addStretch()
-        self.vlayout_jeu.addWidget(self.zone_jeu, alignment=Qt.AlignmentFlag.AlignCenter)
-        self.vlayout_jeu.addStretch()
+        self.champ_nom = QLineEdit("Player 1")
+        self.champ_nom.setStyleSheet("""QLineEdit { background: #2e2e2e; color: white;
+            border: 1px solid #555; border-radius: 4px; padding: 5px; font-size: 13px; }""")
+        self.champ_nom.returnPressed.connect(self._on_appliquer)
 
-        # --- Colonne droite ---
-        # --- Colonne droite ---
-        self.vlayout_droite.addStretch(3)        # ← pousse les boutons vers le bas
-        self.vlayout_droite.addWidget(self.menu)
-        self.vlayout_droite.addSpacing(10)       # ← espace entre Menu et Pause
-        self.vlayout_droite.addWidget(self.pause_btn)
-        self.vlayout_droite.addSpacing(10)       # ← espace entre Pause et Quitter
-        self.vlayout_droite.addWidget(self.quitter_top)
-        self.vlayout_droite.addStretch(3)        # ← petit stretch en bas
+        btn_appliquer = QPushButton("Appliquer")
+        btn_appliquer.setStyleSheet("""QPushButton { background: #2e4a2e; color: #80e080;
+            border: 1px solid #4a8a4a; border-radius: 4px; padding: 5px; }""")
+        btn_appliquer.clicked.connect(self._on_appliquer)
 
-        # --- Assemblage ligne centrale ---
-        self.hlayout_centre.addLayout(self.vlayout_gauche, stretch=1)
-        self.hlayout_centre.addLayout(self.vlayout_jeu, stretch=3)   
-        self.hlayout_centre.addLayout(self.vlayout_droite, stretch=1)
-        self.hlayout_centre.setContentsMargins(10, 15, 10, 10)
+        btn_reset = QPushButton("Recommencer  ↺")
+        btn_reset.setStyleSheet("""QPushButton { color: #f0c040; background: #2a2510;
+            border: 1px solid #f0c040; border-radius: 4px; padding: 5px; }""")
+        btn_reset.clicked.connect(self._on_reset)
 
-        # --- Layout principal ---
-        self.vlayout_main.addLayout(self.hlayout_centre)
+        pl = QVBoxLayout(self.menu_panel)
+        pl.setContentsMargins(12, 12, 12, 12)
+        pl.setSpacing(8)
+        header = QLabel("⚙  Paramètres")
+        header.setStyleSheet("color: #aaaaaa; font-size: 12px; font-weight: bold; border: none;")
+        nom_lbl = QLabel("Nom du joueur")
+        nom_lbl.setStyleSheet("color: #aaaaaa; font-size: 11px; border: none;")
+        pl.addWidget(header)
+        pl.addWidget(self._sep())
+        pl.addWidget(nom_lbl)
+        pl.addWidget(self.champ_nom)
+        pl.addWidget(btn_appliquer)
+        pl.addWidget(self._sep())
+        pl.addWidget(btn_reset)
+
+        # --- Assemblage ---
+        col_gauche = QVBoxLayout()
+        col_gauche.addWidget(titre)
+        col_gauche.addStretch(2)
+        col_gauche.addWidget(stats_frame, alignment=Qt.AlignmentFlag.AlignHCenter)
+        col_gauche.addStretch(3)
+
+        col_jeu = QVBoxLayout()
+        col_jeu.addStretch()
+        col_jeu.addWidget(self.zone_jeu, alignment=Qt.AlignmentFlag.AlignCenter)
+        col_jeu.addStretch()
+
+        col_droite = QVBoxLayout()
+        col_droite.addStretch(2)
+        col_droite.addWidget(self.menu_btn)
+        col_droite.addWidget(self.menu_panel)
+        col_droite.addSpacing(10)
+        col_droite.addWidget(self.pause_btn)
+        col_droite.addSpacing(10)
+        col_droite.addWidget(quitter_btn)
+        col_droite.addStretch(3)
+
+        centre = QHBoxLayout()
+        centre.addLayout(col_gauche, stretch=1)
+        centre.addLayout(col_jeu, stretch=3)
+        centre.addLayout(col_droite, stretch=1)
+        centre.setContentsMargins(10, 15, 10, 10)
+
+        main = QVBoxLayout(self)
+        main.addLayout(centre)
+
+        self.ctrl.set_vue(self)
         self.showMaximized()
 
+    # --- Méthodes appelées par le Contrôleur ---
+    def maj_nom(self, nom):      
+        self.nom_valeur.setText(nom);   
+        self.champ_nom.setText(nom)
+    
+    def maj_score(self, score):  
+        self.score_valeur.setText(str(score))
+    
+    def maj_timer(self, texte):  
+        self.timer_valeur.setText(texte)
+    
+    def maj_pause(self, pause):  
+        self.pause_btn.setText("Reprendre  ▶" if pause else "Pause  ⏸")
 
-# --- main -----------------------------------------------------------------
+    # --- Slots UI ---
+    def _on_appliquer(self):   
+        self.ctrl.appliquer_nom(self.champ_nom.text())
+    
+    def _on_reset(self):       
+        self.ctrl.reset(self.champ_nom.text()); self._fermer_menu()
+
+    def _toggle_menu(self, checked):
+        self.menu_panel.setVisible(checked)
+        self.menu_btn.setText("Menu  ✕" if checked else "Menu  ☰")
+
+    def _fermer_menu(self):
+        self.menu_panel.setVisible(False)
+        self.menu_btn.setChecked(False)
+        self.menu_btn.setText("Menu  ☰")
+
+    def _sep(self):
+        f = QFrame(); f.setFrameShape(QFrame.Shape.HLine)
+        f.setStyleSheet("color: #444;"); return f
+
+
 if __name__ == "__main__":
-    print(' --- main --- ')
     app = QApplication(sys.argv)
     fenetre = widget()
     sys.exit(app.exec())
