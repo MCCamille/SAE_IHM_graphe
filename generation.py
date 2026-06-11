@@ -63,8 +63,8 @@ def resoudre(grille):
 def generer_motifs_aleatoires(grille, taille_min=1, taille_max=5):
     non_assignees = {
         (l, c)
-        for l in range(grille.lignes)    # ✅
-        for c in range(grille.colonnes)  # ✅
+        for l in range(grille.lignes)
+        for c in range(grille.colonnes)
     }
 
     motif_id = 0
@@ -105,28 +105,32 @@ def generer_motifs_aleatoires(grille, taille_min=1, taille_max=5):
 
         motif_id += 1
 
-
 def retirer_valeurs(grille, nb_cases_depart):
     toutes_cases = [
         grille.cases[l][c]
-        for l in range(grille.lignes)    # ✅
-        for c in range(grille.colonnes)  # ✅
+        for l in range(grille.lignes)
+        for c in range(grille.colonnes)
     ]
 
-    nb_total = len(toutes_cases)
-    nb_a_retirer = nb_total - nb_cases_depart
-
-    if nb_a_retirer <= 0:
-        for case in toutes_cases:
-            case.fixe = True
-        return
-
-    random.shuffle(toutes_cases)
-
+    # tout mettre en fixe
     for case in toutes_cases:
         case.fixe = True
 
-    for case in toutes_cases[:nb_a_retirer]:
+    cases_retirables = []
+    for motif in grille.motifs.values():
+        cases_motif = list(motif.cases)
+        random.shuffle(cases_motif)
+        
+        # garder entre 1 et 2 cases par motif (aléatoirement)
+        nb_a_garder = random.randint(1, min(2, len(cases_motif)))
+        cases_retirables.extend(cases_motif[nb_a_garder:])
+
+    # mélanger retirer jusqu'à atteindre nb_cases_depart
+    random.shuffle(cases_retirables)
+    nb_total = len(toutes_cases)
+    nb_a_retirer = nb_total - nb_cases_depart
+
+    for case in cases_retirables[:nb_a_retirer]:
         case.valeur = None
         case.fixe = False
 
