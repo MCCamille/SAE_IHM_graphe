@@ -73,36 +73,39 @@ class Grille:
             return True
         return False
 
-    # Permet de convertir la grille en un dictionnaire pour la sauvegarde JSON
     def to_dict(self):
-        """Convertit la grille en un dictionnaire pour la sauvegarde JSON."""
-        motif_map = [
-            [self.cases[r][c].id_motif for c in range(self.colonnes)]
-            for r in range(self.lignes)
-        ]
-        valeurs_initiales = []
+        """Convertit la grille en un dictionnaire groupé par motif pour la sauvegarde JSON."""
+        motifs_dict = {}
+        
         for r in range(self.lignes):
             for c in range(self.colonnes):
                 case = self.cases[r][c]
-                if case.fixe and case.valeur is not None:
-                    valeurs_initiales.append({
-                        "ligne": r,
-                        "colonne": c,
-                        "valeur": case.valeur
-                    })
-        return {
-            "lignes": self.lignes,
-            "colonnes": self.colonnes,
-            "motifs": motif_map,
-            "valeurs_initiales": valeurs_initiales
-        }
+                valeur_json = case.valeur if case.valeur is not None else 0 # Prend la valeur actuelle de la case (ou 0 si elle est vide/None)
 
-    # Permet de sauvegarder la grille au format JSON
+                nom_motif = f"motif{case.id_motif}"
+                
+                if nom_motif not in motifs_dict:
+                    motifs_dict[nom_motif] = []
+                    
+                motifs_dict[nom_motif].append([r, c, valeur_json])
+                
+        return motifs_dict
+
     def sauvegarder_json(self, nom_fichier):
-        """Sauvegarde la grille au format JSON."""
+        """Sauvegarde la grille au format JSON en forçant l'écriture."""
+        donnees = self.to_dict()
+        lignes_json = []
+        for motif, cases in donnees.items():
+            cases_formatees = [f"[{r}, {c}, {v}]" for r, c, v in cases]
+            liste_complete = ", ".join(cases_formatees)
+            lignes_json.append(f'  "{motif}": [{liste_complete}]')
+        json_final = "{\n" + ",\n".join(lignes_json) + "\n}"
+        
+        # Écriture dans le fichier
         with open(nom_fichier, "w", encoding="utf-8") as f:
-            json.dump(self.to_dict(), f, ensure_ascii=False, separators=(",", ": "))
-
+            f.write(json_final)
+        
+        
     # Permet d'afficher les motifs de la grille
     def afficher_motifs(self):
         """Affiche les motifs de la grille en utilisant les id_motif de chaque case."""

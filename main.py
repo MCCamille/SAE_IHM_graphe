@@ -1,3 +1,5 @@
+import os
+
 from generation import Grille,creer_grille_jeu
 
 def main():
@@ -17,6 +19,11 @@ def main():
 
     print("\n--- CONFIGURATION DES MOTIFS ---")
     grille.afficher_motifs()
+    
+    grille.sauvegarder_json("grille_sudoku.json")
+    
+    # Ceci va t'afficher EXACTEMENT où le fichier est enregistré sur ton ordinateur
+    print(f"Le fichier JSON a été mis à jour ")
 
 if __name__ == "__main__":
     main()
