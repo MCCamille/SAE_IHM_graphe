@@ -1,28 +1,29 @@
-import random
-
-from Case import Case
 class Motif:
     def __init__(self, motif_id, cases: list):
         self.motif_id = motif_id
         self.cases = cases
-        self.taille = len(cases)
 
-    def get_cases(self):
-        return self.cases
-    
-    def get_taille(self):
-        return self.taille
-    
-    """Génère aléatoirement le nombre de cases que constituent un motifs (1 à 5 cases)"""
-    @staticmethod
-    def generer_taille_motif():
-        return random.randint(1, 5)
-    
-    """Génère aléatoirement les cases qui constituent un motif"""
-    @staticmethod
-    def generer_cases_motif(taille):
-        return [Case(i, fixe=False) for i in range(taille)]
+    @property
+    def taille(self):
+        return len(self.cases)
 
-    def __str__(self):  
-        """"""      
-        return f"Motif {self.motif_id} avec {self.taille} cases"
+    def valeurs_presentes(self):
+        resultat = []
+        for c in self.cases:
+            if c.valeur is not None:
+                resultat.append(c.valeur)
+        return resultat
+
+    def est_complet(self):
+        for c in self.cases:
+            if c.est_vide():
+                return False
+        return True
+
+    def est_valide(self):
+        valeurs = self.valeurs_presentes()
+        if len(valeurs) != len(set(valeurs)):
+            return False
+        if self.est_complet():
+            return sorted(valeurs) == list(range(1, self.taille + 1))
+        return True

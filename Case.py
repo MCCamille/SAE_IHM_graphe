@@ -1,11 +1,11 @@
 class Case:
-    
-    def __init__(self, ligne, colonne, valeur, fixe):
-
+    def __init__(self, ligne, colonne):
         self.ligne = ligne
         self.colonne = colonne
-        self.valeur = valeur
-        self.fixe = fixe
+        self.valeur = None
+        self.fixe = False
         self.id_motif = None
 
-        case_depart = Case(0,3,4,True)
+    #Renvoie si la case n'a pas de valeur
+    def est_vide(self):
+        return self.valeur is None
