@@ -1,0 +1,8 @@
+{
+    "nom_joueur": "Player 1",
+    "score": 0,
+    "secondes": 4,
+    "cases_joueur": {},
+    "grille_path": "grille_sudoku.json",
+    "pause": false
+}

@@ -10,6 +10,8 @@ def main():
     print("--- VERIFICATION DE LA SOLUTION COMPLETE ---")
     grille.afficher_valeurs()
     print("--------------------------------------------")
+    grille.sauvegarder_json("solution_grille_sudoku.json")
+
 
     # On creuse la grille pour le joueur
     creer_grille_jeu(grille)
