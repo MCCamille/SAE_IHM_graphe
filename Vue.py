@@ -295,32 +295,9 @@ class FenetreJeu(QWidget):
         """)
         self.zone_jeu.setFixedSize(700, 700)
 
-        # Bouton Vérification placé en bas à droite de la grille
-        self.btn_verifier = QPushButton("Vérifier")
-        self.btn_verifier.setMinimumSize(140, 42)
-        self.btn_verifier.setStyleSheet("""
-        QPushButton {
-            background-color: #233a28;
-            color: #f5f5f5;
-            border: 1px solid #3b6a43;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: bold;
-        }
-        QPushButton:hover {
-            background-color: #2b4a32;
-        }
-        """)
-        self.btn_verifier.clicked.connect(self.ctrl.verifier_grille)
-
-        layout_bas_grille = QHBoxLayout()
-        layout_bas_grille.addStretch()
-        layout_bas_grille.addWidget(self.btn_verifier)
-
         zone_gauche_principale = QVBoxLayout()
         zone_gauche_principale.addLayout(layout_haut_grille)
         zone_gauche_principale.addWidget(self.zone_jeu)
-        zone_gauche_principale.addLayout(layout_bas_grille) # Intégration en bas à droite de la grille
 
         self.menu_btn = QPushButton("Menu  ☰")
         self.menu_btn.setCheckable(True)
@@ -373,12 +350,33 @@ class FenetreJeu(QWidget):
 
         pav_num = self._creer_pave_numerique()
 
+        # Nouveau bouton de vérification (vert clair, extrait du pavé)
+        self.btn_verifier = QPushButton("Vérifier")
+        self.btn_verifier.setFixedWidth(180)
+        self.btn_verifier.setMinimumHeight(46)
+        self.btn_verifier.setStyleSheet("""
+        QPushButton {
+            background-color: #233a28;
+            color: #f5f5f5;
+            border: 1px solid #3b6a43;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        QPushButton:hover {
+            background-color: #2b4a32;
+        }
+        """)
+        self.btn_verifier.clicked.connect(self.ctrl.verifier_grille)
+
+        # La zone droite contient désormais le menu, le pavé ET le bouton de vérification calé en bas à droite de la grille
         zone_droite = QVBoxLayout()
         zone_droite.addWidget(self.menu_btn, alignment=Qt.AlignmentFlag.AlignTop)
         zone_droite.addWidget(self.menu_panel, alignment=Qt.AlignmentFlag.AlignTop)
         zone_droite.addSpacing(10)
         zone_droite.addWidget(pav_num, alignment=Qt.AlignmentFlag.AlignTop)
-        zone_droite.addStretch()
+        zone_droite.addStretch() # Repousse le bouton Vérifier vers le bas
+        zone_droite.addWidget(self.btn_verifier, alignment=Qt.AlignmentFlag.AlignBottom)
 
         layout_jeu_et_pave = QHBoxLayout()
         layout_jeu_et_pave.addLayout(zone_gauche_principale)
@@ -490,16 +488,16 @@ class FenetreJeu(QWidget):
 
 
 class PopUpVictoire(QDialog):
-    """Fenêtre de félicitations stylisée incluant le chat.gif en animation continue"""
+    """Fenêtre de félicitations sans cadre extérieur, boutons alignés verticalement et stylisés comme le Menu"""
     def __init__(self, nom_joueur, score, ctrl):
         super().__init__()
         self.ctrl = ctrl
         self.setWindowTitle("Félicitations !")
-        self.setFixedSize(450, 480)
+        self.setFixedSize(400, 520)
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
-        self.setStyleSheet("background-color: #1a1b1f; border: 2px solid #303844; border-radius: 16px;")
-
-        # CORRECTION ICI : On passe directement les flags sans le "Qt.WindowFlags" devant
+        
+        # Style sans bordures (border: none) et fond sombre
+        self.setStyleSheet("background-color: #1a1b1f; border: none;")
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
 
         lbl_titre = QLabel("VICTOIRE !")
@@ -508,7 +506,7 @@ class PopUpVictoire(QDialog):
         lbl_titre.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         lbl_msg = QLabel(f"Bravo {nom_joueur} !\nVous avez résolu la grille.\nScore final : {score}")
-        lbl_msg.setFont(QFont("Arial", 14, QFont.Weight.Bold))
+        lbl_msg.setFont(QFont("Arial", 13, QFont.Weight.Bold))
         lbl_msg.setStyleSheet("color: #f5f5f5; background: transparent;")
         lbl_msg.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -525,48 +523,27 @@ class PopUpVictoire(QDialog):
             self.lbl_gif.setText("🐾 (chat.gif manquant) 🐾")
             self.lbl_gif.setStyleSheet("color: #6f7a88; font-size: 16px;")
 
+        # Boutons configurés à l'identique du menu (style, taille fixe et police)
         btn_nouvelle = QPushButton("Nouvelle grille")
-        btn_nouvelle.setMinimumHeight(45)
-        btn_nouvelle.setStyleSheet("""
-            QPushButton {
-                background-color: #233a28;
-                color: #f5f5f5;
-                border: 1px solid #3b6a43;
-                border-radius: 12px;
-                font-weight: bold;
-                font-size: 13px;
-                padding: 0px 20px;
-            }
-            QPushButton:hover { background-color: #2b4a32; }
-        """)
+        btn_nouvelle.setFixedWidth(180)
+        btn_nouvelle.setMinimumHeight(40)
+        btn_nouvelle.setStyleSheet(BTN_STYLE)
         btn_nouvelle.clicked.connect(self.ctrl.nouvelle_partie)
 
         btn_quitter = QPushButton("Quitter")
-        btn_quitter.setMinimumHeight(45)
-        btn_quitter.setStyleSheet("""
-            QPushButton {
-                background-color: #3a2323;
-                color: #f5f5f5;
-                border: 1px solid #6a3b3b;
-                border-radius: 12px;
-                font-weight: bold;
-                font-size: 13px;
-                padding: 0px 20px;
-            }
-            QPushButton:hover { background-color: #4a2b2b; }
-        """)
+        btn_quitter.setFixedWidth(180)
+        btn_quitter.setMinimumHeight(40)
+        btn_quitter.setStyleSheet(BTN_STYLE)
         btn_quitter.clicked.connect(QApplication.instance().quit)
 
-        layout_boutons = QHBoxLayout()
-        layout_boutons.setSpacing(20)
-        layout_boutons.addWidget(btn_nouvelle)
-        layout_boutons.addWidget(btn_quitter)
-
+        # Disposition verticale pour empiler les éléments et boutons l'un sous l'autre
         layout_principal = QVBoxLayout(self)
-        layout_principal.setContentsMargins(25, 30, 25, 30)
+        layout_principal.setContentsMargins(40, 30, 40, 30)
         layout_principal.setSpacing(15)
+        
         layout_principal.addWidget(lbl_titre)
         layout_principal.addWidget(lbl_msg)
         layout_principal.addWidget(self.lbl_gif, alignment=Qt.AlignmentFlag.AlignCenter)
-        layout_principal.addSpacing(10)
-        layout_principal.addLayout(layout_boutons)
+        layout_principal.addSpacing(15)
+        layout_principal.addWidget(btn_nouvelle, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout_principal.addWidget(btn_quitter, alignment=Qt.AlignmentFlag.AlignCenter)
