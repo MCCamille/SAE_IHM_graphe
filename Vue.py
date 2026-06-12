@@ -23,15 +23,16 @@ COULEURS_MOTIF = [
 
 
 class GrilleWidget(QWidget):
-    """Affiche une grille 8×8 lue depuis un fichier JSON."""
-
     TAILLE_GRILLE = 8
 
-    def __init__(self, chemin_json: str, parent=None):
+    def __init__(self, chemin_json: str, ctrl, parent=None):  # ← ctrl ajouté
         super().__init__(parent)
+        self.ctrl = ctrl  # ← référence au contrôleur
         self.motifs: dict = {}
         self.case_motif: dict = {}
         self.case_valeur: dict = {}
+        self.case_erreur = None       # ← case en rouge
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)  # ← pour capter le clavier
         self._charger(chemin_json)
 
     def _charger(self, chemin: str):
@@ -44,23 +45,56 @@ class GrilleWidget(QWidget):
                 self.case_motif[(x, y)] = idx
                 self.case_valeur[(x, y)] = val
 
+    def _calcul_taille(self):
+        """Calcule les dimensions de la grille."""
+        marge = 20
+        n = self.TAILLE_GRILLE
+        taille_case = min((self.width() - 2*marge) // n, (self.height() - 2*marge) // n)
+        grille_px = taille_case * n
+        ox = (self.width() - grille_px) // 2
+        oy = (self.height() - grille_px) // 2
+        return taille_case, ox, oy
+
+    def mousePressEvent(self, event):
+        taille_case, ox, oy = self._calcul_taille()
+        x = (event.pos().x() - ox) // taille_case
+        y = (event.pos().y() - oy) // taille_case
+        if 0 <= x < self.TAILLE_GRILLE and 0 <= y < self.TAILLE_GRILLE:
+            self.ctrl.selectionner_case(x, y)
+        self.setFocus()  # ← important pour capter le clavier après le clic
+
+    def keyPressEvent(self, event):
+        key = event.key()
+        if key in (Qt.Key.Key_1, Qt.Key.Key_2, Qt.Key.Key_3,
+                   Qt.Key.Key_4, Qt.Key.Key_5, Qt.Key.Key_6,
+                   Qt.Key.Key_7, Qt.Key.Key_8, Qt.Key.Key_9):
+            self.ctrl.saisir_valeur(int(event.text()))
+        elif key in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
+            self.ctrl.effacer_valeur()
+
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        w, h = self.width(), self.height()
         n = self.TAILLE_GRILLE
-        marge = 20
-        taille_case = min((w - 2 * marge) // n, (h - 2 * marge) // n)
+        taille_case, ox, oy = self._calcul_taille()
         grille_px = taille_case * n
-        ox = (w - grille_px) // 2
-        oy = (h - grille_px) // 2
 
-        # Fond des cases coloré par motif (pastel)
+        # Fond des cases
         for y in range(n):
             for x in range(n):
                 idx = self.case_motif.get((x, y), -1)
-                couleur = COULEURS_MOTIF[idx % len(COULEURS_MOTIF)] if idx >= 0 else COULEUR_NEUTRE
+                
+                # Surbrillance case sélectionnée
+                if self.ctrl.case_selectionnee == (x, y):
+                    couleur = QColor("#ffff00")
+                # Case en erreur
+                elif self.case_erreur == (x, y):
+                    couleur = QColor("#ff4444")
+                # Couleur normale du motif
+                else:
+                    couleur = COULEURS_MOTIF[idx % len(COULEURS_MOTIF)] if idx >= 0 else COULEUR_NEUTRE
+                
                 rect = QRect(ox + x * taille_case, oy + y * taille_case,
                              taille_case, taille_case)
                 painter.fillRect(rect, couleur)
@@ -71,7 +105,7 @@ class GrilleWidget(QWidget):
             painter.drawLine(ox + i * taille_case, oy, ox + i * taille_case, oy + grille_px)
             painter.drawLine(ox, oy + i * taille_case, ox + grille_px, oy + i * taille_case)
 
-        # Valeurs spéciales
+        # Valeurs
         font = QFont("Arial", max(8, taille_case // 4), QFont.Weight.Bold)
         painter.setFont(font)
         for (x, y), val in self.case_valeur.items():
@@ -98,7 +132,7 @@ class widget(QWidget):
 
         # --- Zone de jeu ---
         chemin_json = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Exemples de grille", "grille1.json")
-        self.zone_jeu = GrilleWidget(chemin_json)
+        self.zone_jeu = GrilleWidget(chemin_json, self.ctrl)
         self.zone_jeu.setStyleSheet("background-color: lightblue;")
         self.zone_jeu.setFixedSize(750, 700)
 
@@ -256,3 +290,12 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     fenetre = widget()
     sys.exit(app.exec())
+
+    # À la toute fin, après tous les widgets :
+    self.ctrl.set_vue(self)
+    from generation import creer_grille_jeu
+    grille = creer_grille_jeu()
+    if grille:
+    self.ctrl.set_grille(grille)
+        
+    self.showMaximized()

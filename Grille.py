@@ -9,8 +9,28 @@ class Grille:
         self.colonnes = colonnes
         self.cases = [[Case(l, c) for c in range(colonnes)] for l in range(lignes)]
         self.motifs = {}
+
+    # fonction ajoutée en plus
+
+    def peut_placer(self, case, valeur) -> bool:
+        """Vérifie si une valeur peut être placée dans une case."""
+        motif = self.motifs[case.id_motif]
         
+        # Contrainte 1 : la valeur ne dépasse pas la taille du motif
+        if valeur < 1 or valeur > motif.taille:
+            return False
         
+        # Contrainte 2 : la valeur n'est pas déjà dans le motif
+        if valeur in motif.valeurs_presentes():
+            return False
+        
+        # Contrainte 3 : aucun voisin n'a la même valeur
+        if not self.est_chiffre_valide(case, valeur):
+            return False
+        
+        return True
+
+      
     # Permet d'obtenir une case de la grille à partir de ses coordonnées (ligne, colonne)
     def get_case(self, ligne, colonne) -> Case:
         return self.cases[ligne][colonne]
