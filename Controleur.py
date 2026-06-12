@@ -1,5 +1,6 @@
+import sys
 from PyQt6.QtCore import QTimer
-
+from PyQt6.QtWidgets import QApplication
 
 class Controleur:
 
@@ -45,3 +46,10 @@ class Controleur:
         self.secondes += 1
         m, s = divmod(self.secondes, 60)
         self._vue.maj_timer(f"{m:02d}:{s:02d}")
+
+
+if __name__ == "__main__":
+    from Vue import Vue
+    app = QApplication(sys.argv)
+    fenetre = Vue()
+    sys.exit(app.exec())

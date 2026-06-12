@@ -1,13 +1,11 @@
-import sys
 import json
 import os
-from PyQt6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton,
+from PyQt6.QtWidgets import (QWidget, QLabel, QPushButton,
                               QLineEdit, QFrame, QHBoxLayout, QVBoxLayout)
 from PyQt6.QtCore import Qt, QRect
 from PyQt6.QtGui import QFont, QPainter, QColor, QPen
 
 from Controleur import Controleur
-
 
 # Couleur de fond pour les cases sans motif
 COULEUR_NEUTRE = QColor("#e8f0f5")
@@ -84,7 +82,7 @@ class GrilleWidget(QWidget):
         painter.end()
 
 
-class widget(QWidget):
+class Vue(QWidget):
 
     def __init__(self):
         super().__init__()
@@ -97,7 +95,7 @@ class widget(QWidget):
         titre.setFont(QFont("Arial", 24, QFont.Weight.Bold))
 
         # --- Zone de jeu ---
-        chemin_json = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Exemples de grille", "grille1.json")
+        chemin_json = os.path.join(os.path.dirname(os.path.abspath(__file__)), "grille_sudoku.json")
         self.zone_jeu = GrilleWidget(chemin_json)
         self.zone_jeu.setStyleSheet("background-color: lightblue;")
         self.zone_jeu.setFixedSize(750, 700)
@@ -251,8 +249,3 @@ class widget(QWidget):
         f.setStyleSheet("color: #444;")
         return f
 
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    fenetre = widget()
-    sys.exit(app.exec())
